@@ -3,10 +3,10 @@ import arcade
 
 class Player(arcade.Sprite):
     def __init__(self):
-        super().__init__("resources/player1.png")
+        super().__init__("resources/player1.png",)
         self.speed = 200
-        self.center_x = 704-24
-        self.center_y = 1280-1232+24
+        self.center_x = 0
+        self.center_y = 0
         
         # Направления: 0=вверх, 1=вправо, 2=вниз, 3=влево
         self.direction = 0

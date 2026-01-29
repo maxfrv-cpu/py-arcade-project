@@ -27,6 +27,8 @@ class Level3(arcade.Window):
 
         self.player = Player()
         self.player_list.append(self.player)
+        self.player.center_x = 704-24
+        self.player.center_y = 1280-1232+24
 
 
         self.physics_engine = arcade.PhysicsEngineSimple(
