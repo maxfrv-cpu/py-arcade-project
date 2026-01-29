@@ -5,13 +5,15 @@ TILE_SCALING = 1.0
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 1280
 SCREEN_TITLE = "Level 3"
-
+CAMERA_LERP = 0.1
+ZOOM_LEVEL = 1.5
 
 class Level3(arcade.Window):
     def __init__(self, width, height, title):
         super().__init__(width, height, title)
         self.keys_pressed = set()
-        
+
+        self.world_camera = arcade.camera.Camera2D()
 
     def setup(self):
         self.wall_list = arcade.SpriteList()
@@ -33,9 +35,12 @@ class Level3(arcade.Window):
             self.player, self.collision_list
         )
 
+
     def on_draw(self):
         self.clear()
 
+        self.world_camera.use()
+        self.world_camera.zoom = ZOOM_LEVEL
         self.floor_list.draw()
         self.wall_list.draw()
         self.player_list.draw()
@@ -44,6 +49,16 @@ class Level3(arcade.Window):
     def on_update(self, delta_time):
         self.physics_engine.update()
         self.player_list.update(delta_time, self.keys_pressed)
+
+        position = (
+            self.player.center_x,
+            self.player.center_y
+        )
+        self.world_camera.position = arcade.math.lerp_2d(  # Изменяем позицию камеры
+            self.world_camera.position,
+            position,
+            CAMERA_LERP,  # Плавность следования камеры
+        )
 
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
