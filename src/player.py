@@ -3,7 +3,7 @@ import arcade
 
 class Player(arcade.Sprite):
     def __init__(self):
-        super().__init__("resources/player.png")
+        super().__init__("resources/player1.png")
         self.speed = 200  
 
         self.center_x = 704-24

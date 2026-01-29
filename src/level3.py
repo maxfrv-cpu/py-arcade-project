@@ -10,7 +10,7 @@ ZOOM_LEVEL = 1.5
 
 class Level3(arcade.Window):
     def __init__(self, width, height, title):
-        super().__init__(width, height, title)
+        super().__init__(width, height, title, fullscreen=True)
         self.keys_pressed = set()
 
         self.world_camera = arcade.camera.Camera2D()
@@ -62,7 +62,18 @@ class Level3(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
-        
+        if key == arcade.key.F11:
+            # Переключение режима
+            self.set_fullscreen(not self.fullscreen)
+            # При выходе из полноэкранного режима можно восстановить размер
+            if not self.fullscreen:
+                self.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
+            
+            # Пересчитываем камеру после изменения размера
+            self.world_camera = arcade.camera.Camera2D()
+            self.world_camera.zoom = ZOOM_LEVEL
+            self.world_camera.position = (self.player.center_x, self.player.center_y)
+
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:
             self.keys_pressed.remove(key)
