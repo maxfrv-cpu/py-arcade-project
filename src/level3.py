@@ -1,12 +1,10 @@
 import arcade
 from player import Player
+from constants import TILE_SCALING, CAMERA_LERP, ZOOM_LEVEL, SCREEN_WIDTH, SCREEN_HEIGHT
 
-TILE_SCALING = 1.0
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 1280
+
 SCREEN_TITLE = "Level 3"
-CAMERA_LERP = 0.1
-ZOOM_LEVEL = 1.5
+
 
 class Level3(arcade.Window):
     def __init__(self, width, height, title):
@@ -77,13 +75,3 @@ class Level3(arcade.Window):
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:
             self.keys_pressed.remove(key)
-
-
-def main():
-    game = Level3(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    game.setup()  # Запускаем начальную настройку игры
-    arcade.run()
-
-
-if __name__ == "__main__":
-    main()
