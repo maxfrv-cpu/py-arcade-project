@@ -1,10 +1,11 @@
 import arcade
+from constants import SPEED
 
 
 class Player(arcade.Sprite):
     def __init__(self):
-        super().__init__("resources/player1.png",)
-        self.speed = 200
+        super().__init__("resources/player1.png")
+        self.speed = SPEED
         self.center_x = 0
         self.center_y = 0
         
