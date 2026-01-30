@@ -3,9 +3,8 @@ from constants import TILE_SCALING, CAMERA_LERP, ZOOM_LEVEL, SCREEN_WIDTH, SCREE
 import arcade
 from player import Player
 from enemy import EnemyKnife
+from level2 import Level2
 
-STATE_GAME = 0
-STATE_GAME_OVER = 1
 
 class Level1(arcade.View):
     def __init__(self):
@@ -18,7 +17,6 @@ class Level1(arcade.View):
         self.wall_list = arcade.SpriteList()
         self.player_list = arcade.SpriteList()
         self.enemy_list = arcade.SpriteList()
-        self.current_state = STATE_GAME
 
         map_name = "resources/level1.tmx"
         tile_map = arcade.load_tilemap(map_name, scaling=TILE_SCALING)
@@ -65,6 +63,12 @@ class Level1(arcade.View):
     def on_update(self, delta_time):
         self.physics_engine.update()
         self.player_list.update(delta_time, self.keys_pressed)
+        
+        if len(self.enemy_list) == 0:
+            # Уровень пройден
+            level2 = Level2()
+            level2.setup()
+            self.window.show_view(level2)
 
         for enemy in self.enemy_list:
             is_player_dead = enemy.update_enemy(self.player)
@@ -124,11 +128,6 @@ class Level1(arcade.View):
             self.world_camera = arcade.camera.Camera2D()
             self.world_camera.zoom = ZOOM_LEVEL
             self.world_camera.position = (self.player.center_x, self.player.center_y)
-
-        if self.current_state == STATE_GAME_OVER:
-            if key == arcade.key.R:
-                # Перезапускаем всё
-                self.setup()
     
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:
@@ -163,3 +162,10 @@ class GameOverView(arcade.View):
             game_view = Level1()
             game_view.setup()
             self.window.show_view(game_view)
+
+        if key == arcade.key.F11:
+            # Переключение режима
+            self.window.set_fullscreen(not self.window.fullscreen)
+            # При выходе из полноэкранного режима можно восстановить размер
+            if not self.window.fullscreen:
+                self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)

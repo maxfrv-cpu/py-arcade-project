@@ -45,6 +45,14 @@ class MenuView(arcade.View):
     def _point_in_rect(self, x, y, rect):
         left, bottom, right, top = rect
         return left <= x <= right and bottom <= y <= top
+    
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.F11:
+            # Переключение режима
+            self.window.set_fullscreen(not self.window.fullscreen)
+            # При выходе из полноэкранного режима можно восстановить размер
+            if not self.window.fullscreen:
+                self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
 
 
 class LevelSelectView(arcade.View):
@@ -100,3 +108,11 @@ class LevelSelectView(arcade.View):
     def _point_in_rect(self, x, y, rect):
         left, bottom, right, top = rect
         return left <= x <= right and bottom <= y <= top
+    
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.F11:
+            # Переключение режима
+            self.window.set_fullscreen(not self.window.fullscreen)
+            # При выходе из полноэкранного режима можно восстановить размер
+            if not self.window.fullscreen:
+                self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
