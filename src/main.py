@@ -1,15 +1,15 @@
-from level3 import Level3
-from level1 import Level1
 import arcade
 from constants import SCREEN_HEIGHT, SCREEN_WIDTH
-from level2 import Level2
+from menu import MenuView
 
 
 SCREEN_TITLE = "Game"
 
 def main():
-    game = Level1(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
-    game.setup()  # Запускаем начальную настройку игры
+    # Создаём одно окно (fullscreen по умолчанию) и показываем главное меню
+    window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE, fullscreen=True)
+    menu = MenuView()
+    window.show_view(menu)
     arcade.run()
 
 if __name__ == "__main__":

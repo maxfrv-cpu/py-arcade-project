@@ -3,12 +3,9 @@ from player import Player
 from constants import TILE_SCALING, CAMERA_LERP, ZOOM_LEVEL, SCREEN_WIDTH, SCREEN_HEIGHT
 
 
-SCREEN_TITLE = "Level 3"
-
-
-class Level3(arcade.Window):
-    def __init__(self, width, height, title):
-        super().__init__(width, height, title, fullscreen=True)
+class Level3(arcade.View):
+    def __init__(self):
+        super().__init__()
         self.keys_pressed = set()
 
         self.world_camera = arcade.camera.Camera2D()
@@ -34,6 +31,10 @@ class Level3(arcade.Window):
         self.physics_engine = arcade.PhysicsEngineSimple(
             self.player, self.collision_list
         )
+
+    def on_show(self):
+        # Настраиваем позицию камеры при показе View
+        self.world_camera.position = (self.player.center_x, self.player.center_y)
 
 
     def on_draw(self):
@@ -64,10 +65,10 @@ class Level3(arcade.Window):
         self.keys_pressed.add(key)
         if key == arcade.key.F11:
             # Переключение режима
-            self.set_fullscreen(not self.fullscreen)
+            self.window.set_fullscreen(not self.window.fullscreen)
             # При выходе из полноэкранного режима можно восстановить размер
-            if not self.fullscreen:
-                self.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
+            if not self.window.fullscreen:
+                self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
             
             # Пересчитываем камеру после изменения размера
             self.world_camera = arcade.camera.Camera2D()

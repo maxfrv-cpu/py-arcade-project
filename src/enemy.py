@@ -1,7 +1,7 @@
 import arcade
 import math
 
-from constants import ANGRY_ENEMY_SPEED, VIEW_DISTANCE
+from constants import ANGRY_ENEMY_SPEED, VIEW_DISTANCE, ENEMY_ATTACK_RANGE
 
 class EnemyKnife(arcade.Sprite):
     def __init__(self, image_file):
@@ -57,6 +57,6 @@ class EnemyKnife(arcade.Sprite):
         distance = arcade.get_distance_between_sprites(self, player_sprite)
         
         # Если дистанция меньше 10 пикселей — игрок убит
-        if distance <= 10:
+        if distance <= ENEMY_ATTACK_RANGE:
             return True
         return False

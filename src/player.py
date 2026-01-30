@@ -1,5 +1,5 @@
 import arcade
-from constants import SPEED
+from constants import SPEED, ATTACK_RANGE
 
 
 class Player(arcade.Sprite):
@@ -8,6 +8,7 @@ class Player(arcade.Sprite):
         self.speed = SPEED
         self.center_x = 0
         self.center_y = 0
+        self.attack_range = ATTACK_RANGE  # Радиус атаки
         
         # Направления: 0=вверх, 1=вправо, 2=вниз, 3=влево
         self.direction = 0
@@ -46,3 +47,18 @@ class Player(arcade.Sprite):
         
         # Обновляем текстуру
         self.texture = self.textures[self.direction]
+
+    def attack(self, enemy_list):
+        """Проверяет всех врагов и убивает тех, кто в радиусе"""
+        killed_any = False
+        
+        # Но для Hotline Miami лучше проверять именно дистанцию от центра до центра:
+        for enemy in enemy_list:
+            distance = arcade.get_distance_between_sprites(self, enemy)
+            
+            if distance <= self.attack_range:
+                # Враг умирает
+                enemy.remove_from_sprite_lists()
+                killed_any = True
+                
+        return killed_any # Возвращаем True, если кто-то погиб (для эффектов)

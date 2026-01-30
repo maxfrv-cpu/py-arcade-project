@@ -1,19 +1,18 @@
+import math
 from constants import TILE_SCALING, CAMERA_LERP, ZOOM_LEVEL, SCREEN_WIDTH, SCREEN_HEIGHT
 import arcade
 from player import Player
 from enemy import EnemyKnife
 
-SCREEN_TITLE = "Level 1"
 STATE_GAME = 0
 STATE_GAME_OVER = 1
 
-class Level1(arcade.Window):
-    def __init__(self, width, height, title):
-        super().__init__(width, height, title, fullscreen=True)
+class Level1(arcade.View):
+    def __init__(self):
+        super().__init__()
         self.keys_pressed = set()
 
         self.world_camera = arcade.camera.Camera2D()
-        self.ui_camera = arcade.camera.Camera2D()
     
     def setup(self):
         self.wall_list = arcade.SpriteList()
@@ -50,59 +49,56 @@ class Level1(arcade.Window):
             self.player, self.collision_list
         )
 
+    def on_show(self):
+        # window доступен после показа View — настраиваем камеры
+        self.world_camera.position = (self.player.center_x, self.player.center_y)
+
     def on_draw(self):
         self.clear()
-
-        if self.current_state == STATE_GAME:
-            self.world_camera.use()
-            self.world_camera.zoom = ZOOM_LEVEL
-            self.floor_list.draw()
-            self.wall_list.draw()
-            self.player_list.draw()
-            self.enemy_list.draw()
-
-        elif self.current_state == STATE_GAME_OVER:
-            # Рисуем экран смерти
-            arcade.draw_rect_filled(arcade.XYWH(self.width/2, self.height/2, self.width, self.height), arcade.color.BLACK_BEAN)
-            arcade.draw_text("ВЫ ПОГИБЛИ", self.width/2, self.height/2 + 50, 
-                             arcade.color.RED, 50, anchor_x="center")
-            arcade.draw_text("Нажмите R для рестарта", self.width/2, self.height/2 - 20, 
-                             arcade.color.WHITE, 20, anchor_x="center")
-            self.ui_camera.use()
+        self.world_camera.use()
+        self.world_camera.zoom = ZOOM_LEVEL
+        self.floor_list.draw()
+        self.wall_list.draw()
+        self.player_list.draw()
+        self.enemy_list.draw()
     
     def on_update(self, delta_time):
-        if self.current_state == STATE_GAME:
-            self.physics_engine.update()
-            self.player_list.update(delta_time, self.keys_pressed)
+        self.physics_engine.update()
+        self.player_list.update(delta_time, self.keys_pressed)
 
-            for enemy in self.enemy_list:
-                is_player_dead = enemy.update_enemy(self.player)
-                if is_player_dead:
-                    self.current_state = STATE_GAME_OVER
-                # Проверяем, видит ли враг игрока
-                if enemy.check_vision(self.player, self.collision_list):
-                    enemy.state = "CHASE"
+        for enemy in self.enemy_list:
+            is_player_dead = enemy.update_enemy(self.player)
+
+            if is_player_dead:
+                # ПЕРЕКЛЮЧАЕМ ОКНО НА РЕСТАРТ
+                death_view = GameOverView()
+                self.window.show_view(death_view)
+                return
+
+            # Проверяем, видит ли враг игрока
+            if enemy.check_vision(self.player, self.collision_list):
+                enemy.state = "CHASE"
             
-                if enemy.state == "CHASE":
-                    # Бежим к игроку
-                    enemy.follow_sprite(self.player)
-                else:
-                    # Враг стоит или патрулирует
-                    enemy.change_x = 0
-                    enemy.change_y = 0
+            if enemy.state == "CHASE":
+                # Бежим к игроку
+                enemy.follow_sprite(self.player)
+            else:
+                # Враг стоит или патрулирует
+                enemy.change_x = 0
+                enemy.change_y = 0
             
-                # ВАЖНО: Обновляем позицию врага и обрабатываем коллизии
-                # Для простоты можно использовать move(), но лучше отдельный physics engine
-                # Если у вас много врагов, нужен physics_engine для каждого или SimplePhysicsEngine
-                enemy.center_x += enemy.change_x * delta_time
-                enemy.center_y += enemy.change_y * delta_time
+            # ВАЖНО: Обновляем позицию врага и обрабатываем коллизии
+            # Для простоты можно использовать move(), но лучше отдельный physics engine
+            # Если у вас много врагов, нужен physics_engine для каждого или SimplePhysicsEngine
+            enemy.center_x += enemy.change_x * delta_time
+            enemy.center_y += enemy.change_y * delta_time
             
-                # Простейшая проверка столкновения со стенами (чтобы не проходили сквозь них)
-                hit_list = arcade.check_for_collision_with_list(enemy, self.collision_list)
-                if hit_list:
-                    # Откат позиции при ударе о стену (очень примитивно)
-                    enemy.center_x -= enemy.change_x * delta_time
-                    enemy.center_y -= enemy.change_y * delta_time
+            # Простейшая проверка столкновения со стенами (чтобы не проходили сквозь них)
+            hit_list = arcade.check_for_collision_with_list(enemy, self.collision_list)
+            if hit_list:
+                # Откат позиции при ударе о стену (очень примитивно)
+                enemy.center_x -= enemy.change_x * delta_time
+                enemy.center_y -= enemy.change_y * delta_time
         
         position = (
             self.player.center_x,
@@ -119,17 +115,15 @@ class Level1(arcade.Window):
         self.keys_pressed.add(key)
         if key == arcade.key.F11:
             # Переключение режима
-            self.set_fullscreen(not self.fullscreen)
+            self.window.set_fullscreen(not self.window.fullscreen)
             # При выходе из полноэкранного режима можно восстановить размер
-            if not self.fullscreen:
-                self.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
+            if not self.window.fullscreen:
+                self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
             
             # Пересчитываем камеру после изменения размера
             self.world_camera = arcade.camera.Camera2D()
             self.world_camera.zoom = ZOOM_LEVEL
             self.world_camera.position = (self.player.center_x, self.player.center_y)
-            self.ui_camera = arcade.camera.Camera2D()
-            self.ui_camera.position = (self.width / 2, self.height / 2)
 
         if self.current_state == STATE_GAME_OVER:
             if key == arcade.key.R:
@@ -139,3 +133,33 @@ class Level1(arcade.Window):
     def on_key_release(self, key, modifiers):
         if key in self.keys_pressed:
             self.keys_pressed.remove(key)   
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if button == arcade.MOUSE_BUTTON_LEFT:
+            # Игрок атакует! Передаем список врагов в его метод
+            success = self.player.attack(self.enemy_list)
+
+
+class GameOverView(arcade.View):
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BLACK)
+        self.ui_camera = arcade.camera.Camera2D()
+        self.ui_camera.position = (self.width / 2, self.height / 2)
+
+    def on_show_view(self):
+        self.on_show()
+
+    def on_draw(self):
+        self.clear()
+        self.ui_camera.use()
+        arcade.draw_text("ВЫ ПОГИБЛИ", self.window.width / 2, self.window.height / 2 + 50,
+                         arcade.color.RED, font_size=50, anchor_x="center")
+        arcade.draw_text("Нажмите R для рестарта", self.window.width / 2, self.window.height / 2 - 20,
+                         arcade.color.WHITE, font_size=20, anchor_x="center")
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.R:
+            # Возвращаемся в игру
+            game_view = Level1()
+            game_view.setup()
+            self.window.show_view(game_view)
