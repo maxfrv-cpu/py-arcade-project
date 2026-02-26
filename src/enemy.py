@@ -17,7 +17,7 @@ class EnemyKnife(arcade.Sprite):
         """Поворачивает спрайт лицом к цели"""
         dy = target_y - self.center_y
         dx = target_x - self.center_x
-        angle = math.atan2(dy, dx)
+        angle = math.atan2(-dy, dx)
         
         # Конвертируем радианы в градусы и устанавливаем угол
         self.angle = math.degrees(angle)
@@ -29,7 +29,7 @@ class EnemyKnife(arcade.Sprite):
         # Вычисляем вектор движения
         angle_rad = math.radians(self.angle)
         self.change_x = math.cos(angle_rad) * self.speed
-        self.change_y = math.sin(angle_rad) * self.speed
+        self.change_y = math.sin(angle_rad) * -self.speed
 
     def check_vision(self, player_sprite, collision_list):
         """

@@ -12,6 +12,7 @@ class Level1(arcade.View):
         self.keys_pressed = set()
 
         self.world_camera = arcade.camera.Camera2D()
+        self.ui_camera = arcade.camera.Camera2D()
     
     def setup(self):
         self.wall_list = arcade.SpriteList()
@@ -31,7 +32,7 @@ class Level1(arcade.View):
         self.player.center_y = 20
 
         enemy1 = EnemyKnife("resources/enemy_knife2.png")
-        enemy2 = EnemyKnife("resources/enemy_knife4.png")
+        enemy2 = EnemyKnife("resources/enemy_knife2.png")
         enemy3 = EnemyKnife("resources/enemy_knife2.png")
         enemy1.center_x = 36
         enemy1.center_y = 96
@@ -48,7 +49,6 @@ class Level1(arcade.View):
         )
 
     def on_show(self):
-        # window доступен после показа View — настраиваем камеры
         self.world_camera.position = (self.player.center_x, self.player.center_y)
 
     def on_draw(self):
@@ -59,13 +59,16 @@ class Level1(arcade.View):
         self.wall_list.draw()
         self.player_list.draw()
         self.enemy_list.draw()
+        
+        self.ui_camera.use()
+        arcade.draw_text(f"Осталось врагов: {len(self.enemy_list)}", 10, self.window.height - 30,
+                         arcade.color.WHITE, font_size=16)
     
     def on_update(self, delta_time):
         self.physics_engine.update()
         self.player_list.update(delta_time, self.keys_pressed)
         
         if len(self.enemy_list) == 0:
-            # Уровень пройден
             level2 = Level2()
             level2.setup()
             self.window.show_view(level2)
@@ -74,33 +77,24 @@ class Level1(arcade.View):
             is_player_dead = enemy.update_enemy(self.player)
 
             if is_player_dead:
-                # ПЕРЕКЛЮЧАЕМ ОКНО НА РЕСТАРТ
                 death_view = GameOverView()
                 self.window.show_view(death_view)
                 return
 
-            # Проверяем, видит ли враг игрока
             if enemy.check_vision(self.player, self.collision_list):
                 enemy.state = "CHASE"
             
             if enemy.state == "CHASE":
-                # Бежим к игроку
                 enemy.follow_sprite(self.player)
             else:
-                # Враг стоит или патрулирует
                 enemy.change_x = 0
                 enemy.change_y = 0
             
-            # ВАЖНО: Обновляем позицию врага и обрабатываем коллизии
-            # Для простоты можно использовать move(), но лучше отдельный physics engine
-            # Если у вас много врагов, нужен physics_engine для каждого или SimplePhysicsEngine
             enemy.center_x += enemy.change_x * delta_time
             enemy.center_y += enemy.change_y * delta_time
             
-            # Простейшая проверка столкновения со стенами (чтобы не проходили сквозь них)
             hit_list = arcade.check_for_collision_with_list(enemy, self.collision_list)
             if hit_list:
-                # Откат позиции при ударе о стену (очень примитивно)
                 enemy.center_x -= enemy.change_x * delta_time
                 enemy.center_y -= enemy.change_y * delta_time
         
@@ -108,23 +102,23 @@ class Level1(arcade.View):
             self.player.center_x,
             self.player.center_y
         )
-        self.world_camera.position = arcade.math.lerp_2d(  # Изменяем позицию камеры
+        self.world_camera.position = arcade.math.lerp_2d(
             self.world_camera.position,
             position,
-            CAMERA_LERP,  # Плавность следования камеры
+            CAMERA_LERP,
         )
 
 
     def on_key_press(self, key, modifiers):
         self.keys_pressed.add(key)
-        if key == arcade.key.F11:
-            # Переключение режима
+        if key == arcade.key.ESCAPE:
+            pause_view = PauseView(self)
+            self.window.show_view(pause_view)
+        elif key == arcade.key.F11:
             self.window.set_fullscreen(not self.window.fullscreen)
-            # При выходе из полноэкранного режима можно восстановить размер
             if not self.window.fullscreen:
                 self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
             
-            # Пересчитываем камеру после изменения размера
             self.world_camera = arcade.camera.Camera2D()
             self.world_camera.zoom = ZOOM_LEVEL
             self.world_camera.position = (self.player.center_x, self.player.center_y)
@@ -135,8 +129,66 @@ class Level1(arcade.View):
 
     def on_mouse_press(self, x, y, button, modifiers):
         if button == arcade.MOUSE_BUTTON_LEFT:
-            # Игрок атакует! Передаем список врагов в его метод
             success = self.player.attack(self.enemy_list)
+
+
+class PauseView(arcade.View):
+    def __init__(self, level_view):
+        super().__init__()
+        self.level_view = level_view
+        self.buttons = {}
+        self.ui_camera = arcade.camera.Camera2D()
+
+    def on_show(self):
+        arcade.set_background_color(arcade.color.BLACK)
+        self.ui_camera = arcade.camera.Camera2D()
+        self.ui_camera.position = (self.window.width / 2, self.window.height / 2)
+
+    def on_draw(self):
+        self.clear()
+        self.ui_camera.use()
+        arcade.draw_text("ПАУЗА", self.window.width / 2, self.window.height / 2 + 100,
+                         arcade.color.WHITE, font_size=50, anchor_x="center")
+
+        btn_w = 280
+        btn_h = 60
+        x = self.window.width / 2
+        y1 = self.window.height / 2
+        y2 = self.window.height / 2 - 80
+        y3 = self.window.height / 2 - 160
+
+        arcade.draw_rect_filled(arcade.XYWH(x, y1, btn_w, btn_h), arcade.color.DARK_GREEN)
+        arcade.draw_text("Продолжить игру", x, y1, arcade.color.WHITE, 20,
+                         anchor_x="center", anchor_y="center")
+        self.buttons['resume'] = (x - btn_w / 2, y1 - btn_h / 2, x + btn_w / 2, y1 + btn_h / 2)
+
+        arcade.draw_rect_filled(arcade.XYWH(x, y2, btn_w, btn_h), arcade.color.DARK_BLUE)
+        arcade.draw_text("Главное меню", x, y2, arcade.color.WHITE, 20,
+                         anchor_x="center", anchor_y="center")
+        self.buttons['menu'] = (x - btn_w / 2, y2 - btn_h / 2, x + btn_w / 2, y2 + btn_h / 2)
+
+        arcade.draw_rect_filled(arcade.XYWH(x, y3, btn_w, btn_h), arcade.color.DARK_RED)
+        arcade.draw_text("Выйти из игры", x, y3, arcade.color.WHITE, 20,
+                         anchor_x="center", anchor_y="center")
+        self.buttons['quit'] = (x - btn_w / 2, y3 - btn_h / 2, x + btn_w / 2, y3 + btn_h / 2)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if self._point_in_rect(x, y, self.buttons['resume']):
+            self.window.show_view(self.level_view)
+        elif self._point_in_rect(x, y, self.buttons['menu']):
+            from menu import MenuView
+            menu_view = MenuView()
+            self.window.show_view(menu_view)
+        elif self._point_in_rect(x, y, self.buttons['quit']):
+            arcade.close_window()
+
+    def _point_in_rect(self, x, y, rect):
+        left, bottom, right, top = rect
+        return left <= x <= right and bottom <= y <= top
+
+    def on_key_press(self, key, modifiers):
+        if key == arcade.key.ESCAPE:
+            self.window.show_view(self.level_view)
 
 
 class GameOverView(arcade.View):
@@ -155,17 +207,21 @@ class GameOverView(arcade.View):
                          arcade.color.RED, font_size=50, anchor_x="center")
         arcade.draw_text("Нажмите R для рестарта", self.window.width / 2, self.window.height / 2 - 20,
                          arcade.color.WHITE, font_size=20, anchor_x="center")
+        arcade.draw_text("Нажмите M для главного меню", self.window.width / 2, self.window.height / 2 - 60,
+                         arcade.color.YELLOW, font_size=16, anchor_x="center")
 
     def on_key_press(self, key, modifiers):
         if key == arcade.key.R:
-            # Возвращаемся в игру
             game_view = Level1()
             game_view.setup()
             self.window.show_view(game_view)
+        
+        if key == arcade.key.M:
+            from menu import MenuView
+            menu_view = MenuView()
+            self.window.show_view(menu_view)
 
         if key == arcade.key.F11:
-            # Переключение режима
             self.window.set_fullscreen(not self.window.fullscreen)
-            # При выходе из полноэкранного режима можно восстановить размер
             if not self.window.fullscreen:
                 self.window.set_size(SCREEN_WIDTH, SCREEN_HEIGHT)
